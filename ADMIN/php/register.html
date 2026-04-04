@@ -51,9 +51,7 @@
             gap: 8px;
         }
 
-        .nav-brand span {
-            color: var(--accent);
-        }
+        .nav-brand span { color: var(--accent); }
 
         .nav-links {
             display: flex;
@@ -68,15 +66,9 @@
             font-weight: 500;
         }
 
-        .nav-link:hover, .nav-link.active {
-            color: var(--accent);
-        }
+        .nav-link:hover, .nav-link.active { color: var(--accent); }
 
-        .nav-actions {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
+        .nav-actions { display: flex; align-items: center; gap: 15px; }
 
         .btn-outline {
             padding: 8px 16px;
@@ -89,9 +81,7 @@
             cursor: pointer;
         }
 
-        .btn-outline:hover {
-            background: var(--bg-body);
-        }
+        .btn-outline:hover { background: var(--bg-body); }
 
         /* --- MAIN LAYOUT --- */
         .main-content {
@@ -234,12 +224,8 @@
 </head>
 <body>
 
-<!-- NAVIGATION BAR -->
 <nav class="navbar">
-    <a href="#" class="nav-brand">
-        Memory<span>Lens</span>
-    </a>
-    
+    <a href="#" class="nav-brand">Memory<span>Lens</span></a>
     <div class="nav-links">
         <a href="dashboard.php" class="nav-link">Dashboard</a>
         <a href="register.html" class="nav-link active">Register</a>
@@ -247,13 +233,11 @@
         <a href="customer.php" class="nav-link">Customers</a>
         <a href="admin_settings.php" class="nav-link">Settings</a>
     </div>
-
     <div class="nav-actions">
-        <button class="btn-outline">Logout</button>
+        <button class="btn-outline" onclick="location.href='logout.php'">Logout</button>
     </div>
 </nav>
 
-<!-- MAIN CONTENT -->
 <main class="main-content">
     <div class="admin-wrapper">
         <div class="header">
@@ -306,8 +290,6 @@
     </div>
 </main>
 
-<!-- Keep all your existing HTML and CSS above this line -->
-
 <script>
     const form = document.getElementById('adminForm');
     const fileInput = document.getElementById('fileInput');
@@ -318,26 +300,7 @@
     let currentBase64 = "";
 
     // Load data from database when page loads
-<<<<<<< HEAD
-    window.onload = fetchGadgets;
-=======
-    window.onload = function() {
-        // Check if logged in
-        fetch('dashboard.php?action=check', { credentials: 'include' })
-        .then(response => response.json())
-        .then(data => {
-            if (data.logged_in) {
-                fetchGadgets();
-            } else {
-                window.location.href = 'login.php';
-            }
-        })
-        .catch(error => {
-            console.error('Error checking login:', error);
-            window.location.href = 'login.php';
-        });
-    };
->>>>>>> 45019c6 (commit)
+    window.addEventListener('DOMContentLoaded', fetchGadgets);
 
     // Handle Image Upload
     fileInput.addEventListener('change', function() {
@@ -354,114 +317,54 @@
         }
     });
 
-    // Handle Form Submit (Send to PHP)
+    // Handle Form Submit
     form.onsubmit = (e) => {
         e.preventDefault();
         
-        // Prepare data to send to PHP
         const formData = new FormData();
         formData.append('name', document.getElementById('name').value);
         formData.append('specs', document.getElementById('specs').value);
         formData.append('stock', document.getElementById('stock').value);
         formData.append('priceDay', document.getElementById('priceDay').value);
         formData.append('priceHour', document.getElementById('priceHour').value);
-        formData.append('image', currentBase64); // Send Base64 string
+        formData.append('image', currentBase64); 
 
-        // Send POST request to API
         fetch('dashboard.php?action=add', {
             method: 'POST',
-<<<<<<< HEAD
             body: formData
         })
         .then(response => response.json())
         .then(data => {
-=======
-            body: formData,
-            credentials: 'include'
-        })
-        .then(response => response.text())
-        .then(text => {
-            let data;
-            try {
-                data = JSON.parse(text);
-            } catch (e) {
-                console.error('Invalid JSON from dashboard.php?action=add:', text);
-                alert('Server returned invalid response when saving. Check browser console for details.');
-                return;
-            }
-
->>>>>>> 45019c6 (commit)
-            if (data.error) {
-                alert("Error: " + data.error);
-                return;
-            }
-<<<<<<< HEAD
-            if(data.status === 'success') {
-=======
             if (data.status === 'success') {
->>>>>>> 45019c6 (commit)
-                // Reset form on success
                 form.reset();
                 previewImg.style.display = 'none';
                 prompt.style.display = 'block';
                 currentBase64 = "";
-<<<<<<< HEAD
-                
-                // Refresh the list to show new item
-                fetchGadgets();
-                
-=======
-
-                // Refresh the list to show new item
-                fetchGadgets();
-
->>>>>>> 45019c6 (commit)
                 alert("Device registered successfully!");
+                fetchGadgets(); // Refresh list
             } else {
-                alert("Error saving data: " + data.message);
+                alert("Error saving data: " + (data.message || data.error));
             }
         })
         .catch(error => {
             console.error('Error:', error);
-            alert("An error occurred. Check the console for details.");
+            alert("An error occurred. Check the console.");
         });
     };
 
-    // Fetch data from PHP and render
+    // Fetch and render data
     function fetchGadgets() {
         displayArea.innerHTML = '<div class="list-title">Loading stock...</div>';
-
-<<<<<<< HEAD
         fetch('dashboard.php?action=fetch')
-        .then(response => response.json())
+        .then(res => res.json())
         .then(data => {
-=======
-        fetch('dashboard.php?action=fetch', {
-            credentials: 'include'
-        })
-        .then(response => response.text())
-        .then(text => {
-            let data;
-            try {
-                data = JSON.parse(text);
-            } catch (e) {
-                console.error('Invalid JSON from dashboard.php?action=fetch:', text);
-                displayArea.innerHTML = '<div class="list-title">Error: Invalid server response.</div>';
-                return;
-            }
-
->>>>>>> 45019c6 (commit)
             if (data.error) {
                 displayArea.innerHTML = '<div class="list-title">Error: ' + data.error + '</div>';
                 return;
             }
             displayArea.innerHTML = '<div class="list-title">Stock Overview</div>';
             
-<<<<<<< HEAD
-            if(data.length === 0) {
-=======
-            if (data.length === 0) {
->>>>>>> 45019c6 (commit)
+            if (!data || data.length === 0) {
                 displayArea.innerHTML += '<p style="color: #64748b; font-size: 0.85rem;">No items in database yet.</p>';
                 return;
             }
@@ -469,9 +372,8 @@
             data.forEach(g => {
                 const card = document.createElement('div');
                 card.className = 'gadget-card';
-                // Notice the keys now match your Database columns (e.g., price_day instead of priceDay)
                 card.innerHTML = `
-                    <img src="${g.image}">
+                    <img src="${g.image || 'https://via.placeholder.com/50'}">
                     <div class="details">
                         <h4>${g.name}</h4>
                         <p>RM ${g.price_day}/day • Qty: ${g.stock}</p>
@@ -484,7 +386,7 @@
         .catch(error => console.error('Error:', error));
     }
 
-    // Delete item (Send to PHP)
+    // Delete item
     function removeG(id) {
         if(confirm("Remove this device from database?")) {
             const formData = new FormData();
@@ -492,17 +394,12 @@
 
             fetch('dashboard.php?action=delete', {
                 method: 'POST',
-<<<<<<< HEAD
                 body: formData
-=======
-                body: formData,
-                credentials: 'include'
->>>>>>> 45019c6 (commit)
             })
             .then(response => response.json())
             .then(data => {
                 if(data.status === 'success') {
-                    fetchGadgets(); // Refresh list after deletion
+                    fetchGadgets();
                 }
             });
         }

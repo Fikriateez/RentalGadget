@@ -24,10 +24,7 @@ $conn->close();
 
 <!DOCTYPE html>
 <html lang="en">
-<<<<<<< HEAD
-=======
 
->>>>>>> 45019c6 (commit)
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -44,15 +41,7 @@ $conn->close();
             --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05);
         }
 
-<<<<<<< HEAD
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-=======
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
->>>>>>> 45019c6 (commit)
+
 
         body {
             background-color: var(--bg-body);
@@ -154,32 +143,15 @@ $conn->close();
 
         .product-image {
             width: 100%;
-<<<<<<< HEAD
-            height: 300px;
-            object-fit: cover;
-            background: #f1f5f9;
-=======
-            max-width: 100%;
-            height: auto;
-            min-height: 250px;
-            max-height: 350px;
+            height: 220px;
             object-fit: contain;
             object-position: center;
-            background: #f1f5f9;
-            display: block;
-        }
-
-        .product-card:hover .product-image {
-            transform: scale(1.01);
->>>>>>> 45019c6 (commit)
+            background: #f8fafc;
         }
 
         .product-content {
             padding: 20px;
-<<<<<<< HEAD
-=======
-            min-height: 250px;
->>>>>>> 45019c6 (commit)
+
         }
 
         .product-name {
@@ -249,17 +221,10 @@ $conn->close();
         }
     </style>
 </head>
-<<<<<<< HEAD
-<body>
-    <nav class="navbar">
-        <a href="product.php"  class="nav-brand">Memory<span>Lens</span></a>
-        </a>
-=======
 
 <body>
     <nav class="navbar">
         <a href="product.php" class="nav-brand">Memory<span>Lens</span></a>
->>>>>>> 45019c6 (commit)
         <div class="nav-actions">
             <a href="about.php" class="nav-link">About</a>
             <a href="product.php" class="nav-link">Products</a>
@@ -288,27 +253,30 @@ $conn->close();
             <?php else: ?>
                 <?php foreach ($gadgets as $gadget): ?>
                     <div class="product-card">
-<<<<<<< HEAD
-                        <img class="product-image" src="<?php echo $gadget['image'] ?: 'https://via.placeholder.com/300x200'; ?>" alt="<?php echo htmlspecialchars($gadget['name']); ?>">
-=======
                         <?php
-                        $imageData = trim($gadget['image'] ?? '');
-                        if ($imageData === '') {
-                            $imageSrc = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjI4MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjFmNWY5Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtc2l6ZT0iMTgiIGZpbGw9IiM5Y2ExMDYiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIiBmb250LWZhbWlseT0ic2Fucy1zZXJpZiI+Tm8gSW1hZ2U8L3RleHQ+PC9zdmc+';
-                        } elseif (strpos($imageData, 'data:image') === 0) {
-                            $imageSrc = $imageData;
-                        } else {
-                            $imageSrc = '../ADMIN/php/' . htmlspecialchars($imageData, ENT_QUOTES);
+                        $imageSrc = 'https://via.placeholder.com/420x260?text=No+Image';
+                        if (!empty($gadget['image'])) {
+                            $rawImage = $gadget['image'];
+                            if (strpos($rawImage, 'http://') === 0 || strpos($rawImage, 'https://') === 0 || strpos($rawImage, '/') === 0) {
+                                $imageSrc = htmlspecialchars($rawImage);
+                            } elseif (strpos($rawImage, 'uploads/') === 0) {
+                                $imageSrc = '../ADMIN/php/' . htmlspecialchars($rawImage);
+                            } else {
+                                $imageSrc = htmlspecialchars($rawImage);
+                            }
                         }
                         ?>
-                        <img class="product-image" src="<?php echo $imageSrc; ?>" alt="<?php echo htmlspecialchars($gadget['name']); ?>">
->>>>>>> 45019c6 (commit)
+                        <img src="<?php echo $imageSrc; ?>" alt="<?php echo htmlspecialchars($gadget['name']); ?>" class="product-image">
                         <div class="product-content">
                             <div class="product-name"><?php echo htmlspecialchars($gadget['name']); ?></div>
                             <div class="product-specs"><?php echo htmlspecialchars($gadget['specs'] ?: 'No specifications available'); ?></div>
+                            <?php
+                            $priceDayValue = $gadget['price_day'] ?? ($gadget['priceDay'] ?? 0);
+                            $priceHourValue = $gadget['price_hour'] ?? ($gadget['priceHour'] ?? 0);
+                            ?>
                             <div class="product-prices">
-                                <span class="price-item">RM <?php echo $gadget['price_day']; ?>/day</span>
-                                <span class="price-item">RM <?php echo $gadget['price_hour']; ?>/hour</span>
+                                <span class="price-item">RM <?php echo number_format((float)$priceDayValue, 2); ?>/day</span>
+                                <span class="price-item">RM <?php echo number_format((float)$priceHourValue, 2); ?>/hour</span>
                             </div>
                             <div class="stock-info">Available: <?php echo $gadget['stock']; ?> units</div>
                             <?php if (isset($_SESSION['user_id'])): ?>
@@ -331,9 +299,3 @@ $conn->close();
         </div>
     </div>
 </body>
-<<<<<<< HEAD
-</html>
-=======
-
-</html>
->>>>>>> 45019c6 (commit)

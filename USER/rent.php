@@ -10,7 +10,7 @@ require 'PHPMailer/src/SMTP.php';
 
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
-    header("Location: login.php");
+    header("Location: about.php");
     exit;
 }
 
@@ -64,16 +64,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $time1 = new DateTime($start_time);
     $time2 = new DateTime($end_time);
     $intervalHours = $time1->diff($time2);
-<<<<<<< HEAD
-    $hours = $intervalHours->h + ($intervalHours->i / 60); 
-    
-=======
     $hours = $intervalHours->h + ($intervalHours->i / 60);
 
->>>>>>> 45019c6 (commit)
     // Validasi ringkas
+    $currentMinute = intval(date('i'));
+    $currentHour = intval(date('H')) + ($currentMinute > 0 ? 1 : 0);
+    $currentLimit = sprintf('%02d:00', $currentHour);
+    if ($currentHour > 23) {
+        $currentLimit = '23:00';
+    }
+
     if ($date2 < $date1) {
         $message = "End date cannot be earlier than start date.";
+    } elseif ($start_date === date('Y-m-d') && $start_time < $currentLimit) {
+        $message = "Pick-up time cannot be earlier than the current time.";
     } elseif ($days == 0 && $time2 <= $time1) {
         $message = "End time must be later than start time for same-day rental.";
     } elseif ($gadget['stock'] <= 0) {
@@ -81,25 +85,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     } else {
         // 1. Calculate total price (Harga sewa sahaja)
         $total_price = ($days * $gadget['price_day']) + ($hours * $gadget['price_hour']);
-<<<<<<< HEAD
-        
-        // 2. LOGIK DEPOSIT: Set 0.00 & Unpaid (Admin akan sahkan di kaunter)
-        $deposit_paid = 0.00; 
-        $deposit_status = "Unpaid";
-        $status = "Pending"; 
-        
-        // 3. LOGIK DEADLINE: Gabungkan end_date dan end_time untuk simpan waktu akhir sepatutnya
-        $return_deadline = $end_date . ' ' . $end_time . ':00';
-        
-        // 4. QUERY INSERT (Pastikan kolum return_deadline ada dalam table bookings)
-        $user_id = $_SESSION['user_id'];
-        $booking_stmt = $conn->prepare("INSERT INTO bookings (user_id, gadget_id, days, hours, total_price, rental_date, return_deadline, status, deposit_paid, deposit_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-        
-        // i = integer, d = double, s = string
-        // Urutan: user_id(i), gadget_id(i), days(i), hours(i), total_price(d), start_date(s), return_deadline(s), status(s), deposit_paid(d), deposit_status(s)
-        $booking_stmt->bind_param("iiiidsssds", $user_id, $gadget_id, $days, $hours, $total_price, $start_date, $return_deadline, $status, $deposit_paid, $deposit_status);
-        
-=======
 
         // 2. LOGIK DEPOSIT: Set 0.00 & Unpaid (Admin akan sahkan di kaunter)
         $deposit_paid = 0.00;
@@ -117,7 +102,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         // Urutan: user_id(i), gadget_id(i), days(i), hours(i), total_price(d), start_date(s), return_deadline(s), status(s), deposit_paid(d), deposit_status(s)
         $booking_stmt->bind_param("iiiidsssds", $user_id, $gadget_id, $days, $hours, $total_price, $start_date, $return_deadline, $status, $deposit_paid, $deposit_status);
 
->>>>>>> 45019c6 (commit)
         if ($booking_stmt->execute()) {
             // Fetch User Email
             $user_email_stmt = $conn->prepare("SELECT email FROM users WHERE id = ?");
@@ -138,11 +122,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $update_stmt->bind_param("ii", $new_stock, $gadget_id);
             $update_stmt->execute();
             $update_stmt->close();
-<<<<<<< HEAD
-            
-=======
 
->>>>>>> 45019c6 (commit)
             $message = "Rental successful! Booking from $start_date to $end_date recorded. Total: RM " . number_format($total_price, 2) . ". Please pay the deposit at the counter.";
             $gadget['stock'] = $new_stock;
 
@@ -153,13 +133,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     $mail->isSMTP();
                     $mail->Host       = 'smtp.gmail.com';
                     $mail->SMTPAuth   = true;
-<<<<<<< HEAD
-                    $mail->Username   = 'kl2508019931@student.uptm.edu.my'; 
-                    $mail->Password   = 'bvoqltwiytcjpjvb'; 
-=======
                     $mail->Username   = 'kl2508019931@student.uptm.edu.my';
                     $mail->Password   = 'bvoqltwiytcjpjvb';
->>>>>>> 45019c6 (commit)
                     $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
                     $mail->Port       = 587;
 
@@ -169,29 +144,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     $mail->isHTML(true);
                     $mail->Subject = 'Rental Confirmation - ' . $gadget['name'];
                     $mail->Body    = "<h3>Thank you for your booking!</h3>" .
-<<<<<<< HEAD
-                                     "<p>You have successfully reserved <strong>" . htmlspecialchars($gadget['name']) . "</strong>.</p>" .
-                                     "<p><strong>Rental Cost:</strong> RM " . number_format($total_price, 2) . "</p>" .
-                                     "<p><strong>Required Deposit:</strong> RM " . number_format($gadget['deposit_price'], 2) . "</p>" .
-                                     "<p>Please proceed to our counter to pay the deposit and collect your device.</p>";
-                    
-=======
                         "<p>You have successfully reserved <strong>" . htmlspecialchars($gadget['name']) . "</strong>.</p>" .
                         "<p><strong>Rental Cost:</strong> RM " . number_format($total_price, 2) . "</p>" .
                         "<p><strong>Required Deposit:</strong> RM " . number_format($gadget['deposit_price'], 2) . "</p>" .
                         "<p>Please proceed to our counter to pay the deposit and collect your device.</p>";
 
->>>>>>> 45019c6 (commit)
                     $mail->send();
                     $message .= " A confirmation email has been sent.";
                 } catch (Exception $e) {
                     $message .= " <br><strong style='color:red;'>Email Error: " . htmlspecialchars($mail->ErrorInfo) . "</strong>";
                 }
             }
-<<<<<<< HEAD
-
-=======
->>>>>>> 45019c6 (commit)
         } else {
             $message = "Error processing rental. Please try again.";
         }
@@ -204,10 +167,7 @@ $conn->close();
 
 <!DOCTYPE html>
 <html lang="en">
-<<<<<<< HEAD
-=======
 
->>>>>>> 45019c6 (commit)
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -224,15 +184,11 @@ $conn->close();
             --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05);
         }
 
-<<<<<<< HEAD
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-=======
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
         }
->>>>>>> 45019c6 (commit)
 
         body {
             background-color: var(--bg-body);
@@ -261,13 +217,9 @@ $conn->close();
             gap: 8px;
         }
 
-<<<<<<< HEAD
-        .nav-brand span { color: var(--accent); }
-=======
         .nav-brand span {
             color: var(--accent);
         }
->>>>>>> 45019c6 (commit)
 
         .container {
             max-width: 900px;
@@ -289,7 +241,8 @@ $conn->close();
         .gadget-image {
             width: 100%;
             height: 350px;
-            object-fit: cover;
+            object-fit: contain;
+            object-position: center;
             border-radius: 12px;
             background: #f1f5f9;
         }
@@ -327,11 +280,27 @@ $conn->close();
             color: var(--text-dim);
         }
 
-        input {
+        input,
+        select {
             width: 100%;
             padding: 10px;
             border: 1px solid var(--border);
             border-radius: 8px;
+            background: #ffffff;
+            font-family: inherit;
+            font-size: 0.95rem;
+            color: var(--text-main);
+        }
+
+        select {
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background-image: linear-gradient(45deg, transparent 50%, var(--text-dim) 50%), linear-gradient(135deg, var(--text-dim) 50%, transparent 50%);
+            background-position: calc(100% - 16px) calc(50% - 4px), calc(100% - 10px) calc(50% - 4px);
+            background-size: 6px 6px, 6px 6px;
+            background-repeat: no-repeat;
+            padding-right: 36px;
         }
 
         .price-calculation {
@@ -360,17 +329,6 @@ $conn->close();
             margin-bottom: 20px;
         }
 
-<<<<<<< HEAD
-        .message.success { background: #d1fae5; color: #065f46; }
-        .message.error { background: #fee2e2; color: #991b1b; }
-
-        @media (max-width: 768px) { .rental-card { grid-template-columns: 1fr; } }
-    </style>
-</head>
-<body>
-    <nav class="navbar">
-        <a href="product.php"  class="nav-brand">Memory<span>Lens</span></a>
-=======
         .message.success {
             background: #d1fae5;
             color: #065f46;
@@ -392,7 +350,6 @@ $conn->close();
 <body>
     <nav class="navbar">
         <a href="product.php" class="nav-brand">Memory<span>Lens</span></a>
->>>>>>> 45019c6 (commit)
         <div class="nav-actions">
             <span>Welcome, <?php echo htmlspecialchars($_SESSION['user_name']); ?></span>
             <a href="logout.php" style="margin-left:15px; color:var(--text-dim); text-decoration:none;">Logout</a>
@@ -408,34 +365,28 @@ $conn->close();
 
         <div class="rental-card">
             <div>
-<<<<<<< HEAD
-                <img class="gadget-image" src="<?php echo $gadget['image'] ?: 'https://via.placeholder.com/400x350'; ?>" alt="">
-=======
                 <?php
                 $imagePath = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjM1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZGRkIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtc2l6ZT0iMTgiIGZpbGw9IiM5OTkiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5ObyBJbWFnZTwvdGV4dD48L3N2Zz4=';
                 if (!empty($gadget['image'])) {
-                    if (strpos($gadget['image'], 'data:image') === 0) {
-                        $imagePath = $gadget['image'];
-                    } elseif (strpos($gadget['image'], 'uploads/') === 0) {
-                        $possiblePath = '../ADMIN/php/' . $gadget['image'];
-                        $fsPath = __DIR__ . '/../ADMIN/php/' . $gadget['image'];
+                    $rawImage = $gadget['image'];
+                    if (strpos($rawImage, 'data:image') === 0 || strpos($rawImage, 'http://') === 0 || strpos($rawImage, 'https://') === 0) {
+                        $imagePath = $rawImage;
+                    } elseif (strpos($rawImage, 'uploads/') === 0) {
+                        $possiblePath = '../ADMIN/php/' . $rawImage;
+                        $fsPath = __DIR__ . '/../ADMIN/php/' . $rawImage;
                         if (file_exists($fsPath)) {
                             $imagePath = $possiblePath;
-                        } else {
-                            $imagePath = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjM1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZGRkIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtc2l6ZT0iMTgiIGZpbGw9IiM5OTkiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIuM2VtIj5GaWxlIE5vdCBGb3VuZDwvdGV4dD48L3N2Zz4=';
                         }
                     }
                 }
                 ?>
                 <img class="gadget-image" src="<?php echo htmlspecialchars($imagePath); ?>" alt="">
->>>>>>> 45019c6 (commit)
                 <h1 style="margin-top:20px;"><?php echo htmlspecialchars($gadget['name']); ?></h1>
                 <p style="color:var(--text-dim); margin:10px 0;"><?php echo htmlspecialchars($gadget['specs']); ?></p>
                 <div style="margin-top:15px;">
                     <span class="price-item">RM <?php echo $gadget['price_day']; ?>/Day</span>
                     <span class="price-item">RM <?php echo $gadget['price_hour']; ?>/Hour</span>
                 </div>
-                <!-- Paparan Harga Deposit Required -->
                 <div style="margin-top: 15px; color: #b45309; font-weight: 700; font-size: 0.9rem;">
                     ⚠️ Required Security Deposit: RM <?php echo number_format($gadget['deposit_price'], 2); ?>
                 </div>
@@ -444,11 +395,7 @@ $conn->close();
             <div>
                 <form class="rental-form" method="POST" id="rentalForm">
                     <h2 style="margin-bottom:15px; font-size:1.1rem;">Select Booking Period</h2>
-<<<<<<< HEAD
-                    
-=======
 
->>>>>>> 45019c6 (commit)
                     <div class="form-row">
                         <div>
                             <label>Start Date</label>
@@ -463,11 +410,11 @@ $conn->close();
                     <div class="form-row">
                         <div>
                             <label>Pick-up Time</label>
-                            <input type="time" id="start_time" name="start_time" required value="09:00">
+                            <input type="time" id="start_time" name="start_time" required step="3600">
                         </div>
                         <div>
                             <label>Return Time</label>
-                            <input type="time" id="end_time" name="end_time" required value="17:00">
+                            <input type="time" id="end_time" name="end_time" required step="3600">
                         </div>
                     </div>
 
@@ -478,14 +425,9 @@ $conn->close();
                         <small style="color: var(--text-dim);">*Deposit excluded from this total</small>
                     </div>
 
-                    <!-- TAMBAHAN PAUTAN T&C DI SINI -->
                     <div style="text-align: center; margin-bottom: 10px;">
                         <small style="color: var(--text-dim); font-size: 0.75rem;">
-<<<<<<< HEAD
-                            By clicking confirm, you agree to our 
-=======
                             By clicking confirm, you agree to our
->>>>>>> 45019c6 (commit)
                             <a href="tnc.php" target="_blank" style="color: var(--accent); text-decoration: underline;">T&C</a>
                         </small>
                     </div>
@@ -504,54 +446,98 @@ $conn->close();
         const endDate = document.getElementById('end_date');
         const startTime = document.getElementById('start_time');
         const endTime = document.getElementById('end_time');
-<<<<<<< HEAD
-        
-=======
 
->>>>>>> 45019c6 (commit)
         const totalPriceSpan = document.getElementById('totalPrice');
         const durationText = document.getElementById('durationText');
 
         const pricePerDay = <?php echo $gadget['price_day']; ?>;
         const pricePerHour = <?php echo $gadget['price_hour']; ?>;
 
+        function pad(number) {
+            return number.toString().padStart(2, '0');
+        }
+
+        function formatTime(hour, minute) {
+            return `${pad(hour)}:${pad(minute)}`;
+        }
+
+        function getCurrentTimeString() {
+            const now = new Date();
+            const minutes = now.getMinutes();
+            let hour = now.getHours();
+            if (minutes > 0) {
+                hour += 1;
+            }
+            if (hour > 23) {
+                return null;
+            }
+            return formatTime(hour, 0);
+        }
+
+        function updateTimeLimits() {
+            const today = new Date().toISOString().split('T')[0];
+            startDate.min = today;
+            if (!startDate.value) startDate.value = today;
+            if (!endDate.value) endDate.value = startDate.value;
+            if (endDate.value < startDate.value) {
+                endDate.value = startDate.value;
+            }
+            endDate.min = startDate.value;
+
+            // Restrict pickup time only for today. Return time follows pickup time.
+            let minStartTime = '00:00';
+            if (startDate.value === today) {
+                const currentMin = getCurrentTimeString();
+                minStartTime = currentMin || '23:59';
+            }
+            startTime.min = minStartTime;
+            startTime.max = '23:59';
+            if (!startTime.value || startTime.value < minStartTime) {
+                startTime.value = minStartTime;
+            }
+
+            let minEndTime = '00:00';
+            if (endDate.value === startDate.value) {
+                minEndTime = startTime.value || minStartTime;
+            }
+            endTime.min = minEndTime;
+            endTime.max = '23:59';
+            if (!endTime.value || endTime.value < endTime.min) {
+                endTime.value = endTime.min;
+            }
+        }
+
         function calculateRental() {
+            updateTimeLimits();
             if (!startDate.value || !endDate.value || !startTime.value || !endTime.value) return;
 
-            const start = new Date(startDate.value);
-            const end = new Date(endDate.value);
-<<<<<<< HEAD
-            
-=======
+            const today = new Date().toISOString().split('T')[0];
+            if (startDate.value === today) {
+                const nowTime = getCurrentTimeString();
+                if (nowTime && startTime.value < nowTime) {
+                    durationText.textContent = 'Pick-up time cannot be earlier than current time.';
+                    totalPriceSpan.textContent = '0.00';
+                    return;
+                }
+            }
 
->>>>>>> 45019c6 (commit)
-            // Kira beza hari
+            const start = new Date(`${startDate.value}T${startTime.value}`);
+            const end = new Date(`${endDate.value}T${endTime.value}`);
+
             const diffTime = end - start;
-            let days = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-            if (days < 0) days = 0;
+            if (diffTime <= 0) {
+                durationText.textContent = 'End date/time must be later than pick-up date/time.';
+                totalPriceSpan.textContent = '0.00';
+                return;
+            }
 
-            // Kira beza jam
-            const sTime = startTime.value.split(':');
-            const eTime = endTime.value.split(':');
-<<<<<<< HEAD
-            const startH = parseInt(sTime[0]) + parseInt(sTime[1])/60;
-            const endH = parseInt(eTime[0]) + parseInt(eTime[1])/60;
-            
-=======
-            const startH = parseInt(sTime[0]) + parseInt(sTime[1]) / 60;
-            const endH = parseInt(eTime[0]) + parseInt(eTime[1]) / 60;
+            const totalHours = Math.round(diffTime / (1000 * 60 * 60));
+            const fullDays = Math.floor(totalHours / 24);
+            const remainingHours = totalHours % 24;
 
->>>>>>> 45019c6 (commit)
-            let hours = endH - startH;
-            if (hours < 0) hours = 0;
+            const total = (fullDays * pricePerDay) + (remainingHours * pricePerHour);
 
-            const total = (days * pricePerDay) + (hours * pricePerHour);
-<<<<<<< HEAD
-            
-=======
-
->>>>>>> 45019c6 (commit)
-            durationText.textContent = `${days} Days, ${hours.toFixed(1)} Hours`;
+            durationText.textContent = `${fullDays} Days, ${remainingHours} Hours`;
             totalPriceSpan.textContent = total.toFixed(2);
         }
 
@@ -559,14 +545,11 @@ $conn->close();
             el.addEventListener('change', calculateRental);
         });
 
-        // Set default end date to today
         startDate.value = new Date().toISOString().split('T')[0];
         endDate.value = new Date().toISOString().split('T')[0];
+        updateTimeLimits();
         calculateRental();
     </script>
 </body>
-<<<<<<< HEAD
-=======
 
->>>>>>> 45019c6 (commit)
 </html>

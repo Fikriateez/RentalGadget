@@ -3,7 +3,7 @@ session_start();
 
 // Semak jika user sudah login
 if (!isset($_SESSION['user_id'])) {
-    header("Location: login.php");
+    header("Location: about.php");
     exit;
 }
 
@@ -46,6 +46,7 @@ if (!$data) {
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -59,7 +60,11 @@ if (!$data) {
             --border: #e2e8f0;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
 
         body {
             font-family: 'Inter', sans-serif;
@@ -75,7 +80,7 @@ if (!$data) {
             background: #fff;
             padding: 40px;
             border-radius: 8px;
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
         }
 
         .header {
@@ -87,9 +92,20 @@ if (!$data) {
             margin-bottom: 30px;
         }
 
-        .brand h1 { color: var(--accent); font-size: 24px; }
-        .invoice-details { text-align: right; }
-        .invoice-details h2 { font-size: 20px; text-transform: uppercase; margin-bottom: 5px; }
+        .brand h1 {
+            color: var(--accent);
+            font-size: 24px;
+        }
+
+        .invoice-details {
+            text-align: right;
+        }
+
+        .invoice-details h2 {
+            font-size: 20px;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
 
         .info-section {
             display: grid;
@@ -164,16 +180,35 @@ if (!$data) {
             border: none;
         }
 
-        .btn-print { background: var(--accent); color: white; }
-        .btn-back { background: var(--text-dim); color: white; }
+        .btn-print {
+            background: var(--accent);
+            color: white;
+        }
+
+        .btn-back {
+            background: var(--text-dim);
+            color: white;
+        }
 
         @media print {
-            body { background: white; padding: 0; }
-            .invoice-box { box-shadow: none; border: none; max-width: 100%; }
-            .no-print-zone { display: none; }
+            body {
+                background: white;
+                padding: 0;
+            }
+
+            .invoice-box {
+                box-shadow: none;
+                border: none;
+                max-width: 100%;
+            }
+
+            .no-print-zone {
+                display: none;
+            }
         }
     </style>
 </head>
+
 <body>
 
     <div class="no-print-zone">
@@ -229,9 +264,9 @@ if (!$data) {
                         RM <?php echo number_format($data['price_hour'], 2); ?>/h
                     </td>
                     <td>
-                        <?php 
-                            if($data['days'] > 0) echo $data['days'] . " Day(s) ";
-                            if($data['hours'] > 0) echo $data['hours'] . " Hour(s)";
+                        <?php
+                        if ($data['days'] > 0) echo $data['days'] . " Day(s) ";
+                        if ($data['hours'] > 0) echo $data['hours'] . " Hour(s)";
                         ?>
                     </td>
                     <td style="text-align: right; font-weight: 600;">
@@ -243,24 +278,44 @@ if (!$data) {
 
         <div class="total-row">
             <p style="font-size: 14px; color: var(--text-dim);">Rental Fee: RM <?php echo number_format($data['total_price'], 2); ?></p>
-            
-            <!-- TAMBAHAN CODING DEPOSIT -->
-            <p style="font-size: 14px; color: var(--text-dim);">Security Deposit Paid: RM <?php echo number_format($data['deposit_paid'], 2); ?></p>
+            <?php
+            $totalDue = $data['total_price'];
+            if ($data['deposit_paid'] > 0) {
+                $totalDue += $data['deposit_paid'];
+            }
+            ?>
 
-            <!-- LOGIK REFUND & DEDUCTION -->
+            <!-- DEPOSIT SECTION -->
+            <?php if ($data['deposit_status'] == 'Unpaid'): ?>
+                <p style="font-size: 14px; color: #ef4444; font-weight: 600;">Security Deposit (Pending): RM <?php echo number_format($data['deposit_paid'], 2); ?></p>
+            <?php else: ?>
+                <p style="font-size: 14px; color: #10b981;">Security Deposit Paid: RM <?php echo number_format($data['deposit_paid'], 2); ?></p>
+            <?php endif; ?>
+
+            <!-- LOGIK REFUND & DEDUCTION (when returned) -->
             <?php if (strtolower($data['status']) == 'completed'): ?>
-                <p style="font-size: 14px; color: #10b981;">Amount Refunded: RM <?php echo number_format($data['refund_amount'], 2); ?></p>
-                <?php 
+                <p style="font-size: 14px; color: #10b981;">Deposit Refunded: RM <?php echo number_format($data['refund_amount'], 2); ?></p>
+                <?php
                 $deduction = $data['deposit_paid'] - $data['refund_amount'];
-                if ($deduction > 0): ?>
-                    <p style="font-size: 14px; color: #ef4444;">Deduction (Damage/Late): - RM <?php echo number_format($deduction, 2); ?></p>
+                if ($deduction > 0.01): // Only show deduction if there's a meaningful difference (>0.01 to account for rounding)
+                ?>
+                    <p style="font-size: 14px; color: #ef4444;">Deduction (Damage/Late Fees): - RM <?php echo number_format($deduction, 2); ?></p>
+                    <p style="font-size: 14px; color: var(--text-dim);">Net Refund: RM <?php echo number_format($data['refund_amount'], 2); ?></p>
+                    <?php $totalDue = $data['total_price']; // Actual amount paid is just rental fee after return 
+                    ?>
+                <?php else: ?>
+                    <p style="font-size: 14px; color: #10b981;">✓ Full Deposit Refunded (No deductions)</p>
+                    <?php $totalDue = $data['total_price']; // Actual amount paid is just rental fee 
+                    ?>
                 <?php endif; ?>
             <?php endif; ?>
 
             <div style="border-top: 1px solid var(--border); margin: 10px 0; width: 250px; margin-left: auto;"></div>
-            
-            <p style="font-size: 14px; color: var(--text-dim);">Total Amount Due</p>
-            <p class="total-amount">RM <?php echo number_format($data['total_price'], 2); ?></p>
+
+            <p style="font-size: 14px; color: var(--text-dim);">
+                <?php echo (strtolower($data['status']) == 'completed') ? 'Amount Paid' : 'Total Amount Due'; ?>
+            </p>
+            <p class="total-amount">RM <?php echo number_format($totalDue, 2); ?></p>
         </div>
 
         <div class="footer">
@@ -270,5 +325,6 @@ if (!$data) {
     </div>
 
 </body>
+
 </html>
 <?php $conn->close(); ?>

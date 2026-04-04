@@ -16,7 +16,7 @@ if ($conn->connect_error) {
 // --- LOGIK 1: Sahkan Deposit Telah Dibayar ---
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['confirm_deposit'])) {
     $booking_id = intval($_POST['booking_id']);
-    
+
     // Ambil harga deposit asal dari table register melalui gadget_id
     $query_price = "SELECT r.deposit_price FROM bookings b JOIN register r ON b.gadget_id = r.id WHERE b.id = ?";
     $stmt_price = $conn->prepare($query_price);
@@ -46,17 +46,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['confirm_pickup'])) {
 // --- LOGIK 3: Handle Mark as Returned (DENGAN PENGIRAAN DENDA LEWAT) ---
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['mark_returned'])) {
     $booking_id = intval($_POST['booking_id']);
-    
+
     // Ambil data deadline dan harga per jam untuk peranti ini
     $q = "SELECT b.return_deadline, r.price_hour FROM bookings b 
           JOIN register r ON b.gadget_id = r.id WHERE b.id = $booking_id";
     $data = $conn->query($q)->fetch_assoc();
-    
-    $late_fee = 0;
+
+    $late_fee = 0; // Initialize to 0 (no late fee by default)
     if ($data['return_deadline']) {
         $deadline = new DateTime($data['return_deadline']);
         $now = new DateTime(); // Waktu admin tekan butang
-        
+
         if ($now > $deadline) {
             $diff = $deadline->diff($now);
             // Kira jumlah jam lewat (bundar ke atas)
@@ -76,7 +76,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['mark_returned'])) {
 // --- LOGIK 4: Handle Proses Pemulangan & Refund Deposit (Final Step) ---
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['process_return'])) {
     $booking_id = intval($_POST['complete_booking_id']);
-    $refund_amount = floatval($_POST['refund_amount']); 
+    $refund_amount = floatval($_POST['refund_amount']);
 
     $conn->begin_transaction();
 
@@ -136,6 +136,7 @@ $conn->close();
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -154,26 +155,131 @@ $conn->close();
             --warning: #f59e0b;
         }
 
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background-color: var(--bg-body); font-family: 'Inter', sans-serif; color: var(--text-main); min-height: 100vh; }
-        .navbar { background-color: var(--bg-card); border-bottom: 1px solid var(--border); padding: 0 40px; height: 70px; display: flex; align-items: center; justify-content: space-between; }
-        .nav-brand { font-size: 1.25rem; font-weight: 700; color: var(--text-main); text-decoration: none; display: flex; align-items: center; gap: 8px; }
-        .nav-brand span { color: var(--accent); }
-        .nav-links { display: flex; gap: 30px; align-items: center; }
-        .nav-link { text-decoration: none; color: var(--text-dim); font-size: 0.9rem; font-weight: 500; }
-        .nav-link.active { color: var(--accent); }
-        .btn-outline { padding: 8px 16px; border-radius: 8px; border: 1px solid var(--border); background: transparent; color: var(--text-main); font-size: 0.85rem; font-weight: 600; cursor: pointer; }
-        
-        .container { max-width: 1400px; margin: 40px auto; padding: 0 20px; }
-        .page-header { text-align: center; margin-bottom: 40px; }
-         .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 40px; }
-    .stat-card { background: var(--bg-card); border-radius: 12px; border: 1px solid var(--border); padding: 24px; text-align: center; box-shadow: var(--shadow); }
-    .stat-number { font-size: 2rem; font-weight: 700; color: var(--accent); }
-    .bookings-table { background: var(--bg-card); border-radius: 12px; border: 1px solid var(--border); box-shadow: var(--shadow); overflow: hidden; }
-        table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 16px 20px; text-align: left; border-bottom: 1px solid var(--border); }
-        th { background: var(--bg-body); font-size: 0.875rem; text-transform: uppercase; color: var(--text-dim); }
-        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            font-family: 'Inter', sans-serif;
+            color: var(--text-main);
+            min-height: 100vh;
+        }
+
+        .navbar {
+            background-color: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+            padding: 0 40px;
+            height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-brand {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-main);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-brand span {
+            color: var(--accent);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 30px;
+            align-items: center;
+        }
+
+        .nav-link {
+            text-decoration: none;
+            color: var(--text-dim);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .nav-link.active {
+            color: var(--accent);
+        }
+
+        .btn-outline {
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-main);
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .page-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            padding: 24px;
+            text-align: center;
+            box-shadow: var(--shadow);
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .bookings-table {
+            background: var(--bg-card);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            padding: 16px 20px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background: var(--bg-body);
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            color: var(--text-dim);
+        }
+
         .status-badge {
             display: inline-block;
             padding: 4px 12px;
@@ -182,10 +288,26 @@ $conn->close();
             font-weight: 600;
             text-transform: uppercase;
         }
-        .status-completed { background: #dcfce7; color: #166534; }
-        .status-pending { background: #fef3c7; color: #92400e; }
-        .status-pickup { background: #dbeafe; color: #1e40af; }
-        .status-returning { background: #f1f5f9; color: #475569; }
+
+        .status-completed {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status-pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .status-pickup {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .status-returning {
+            background: #f1f5f9;
+            color: #475569;
+        }
 
         .btn-complete {
             background-color: var(--accent);
@@ -198,10 +320,19 @@ $conn->close();
             cursor: pointer;
             transition: background 0.2s;
         }
-        .btn-complete:hover { background-color: #0284c7; }
-        .returned-text { color: var(--text-dim); font-size: 0.8rem; font-weight: 500; }
+
+        .btn-complete:hover {
+            background-color: #0284c7;
+        }
+
+        .returned-text {
+            color: var(--text-dim);
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
     </style>
 </head>
+
 <body>
     <nav class="navbar">
         <a href="dashboard.php" class="nav-brand">Memory<span>Lens</span></a>
@@ -222,20 +353,22 @@ $conn->close();
             <h1>Bookings Management</h1>
             <p>Admin Control Panel</p>
         </div>
-         <div class="stats-grid">
-        <div class="stat-card">
-            <div class="stat-number"><?php echo count($bookings); ?></div>
-            <div class="stat-label">Total Bookings</div>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number"><?php echo count($bookings); ?></div>
+                <div class="stat-label">Total Bookings</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">RM <?php
+                                            $total_revenue = 0;
+                                            foreach ($bookings as $booking) {
+                                                $total_revenue += $booking['total_price'];
+                                            }
+                                            echo number_format($total_revenue, 2);
+                                            ?></div>
+                <div class="stat-label">Total Revenue</div>
+            </div>
         </div>
-        <div class="stat-card">
-            <div class="stat-number">RM <?php
-                $total_revenue = 0;
-                foreach ($bookings as $booking) { $total_revenue += $booking['total_price']; }
-                echo number_format($total_revenue, 2);
-            ?></div>
-            <div class="stat-label">Total Revenue</div>
-        </div>
-    </div>
 
         <div class="bookings-table">
             <table>
@@ -264,17 +397,17 @@ $conn->close();
                             </td>
                             <td><?php echo date('M d, Y', strtotime($booking['rental_date'])); ?></td>
                             <td>
-                                <?php 
-                                    $current_status = strtolower(trim($booking['status']));
-                                    if ($current_status == 'completed') {
-                                        echo '<span class="status-badge status-completed">Returned</span>';
-                                    } elseif ($current_status == 'returning') {
-                                        echo '<span class="status-badge status-returning">Awaiting Refund</span>';
-                                    } elseif ($current_status == 'picked up') {
-                                        echo '<span class="status-badge status-pickup">Picked Up</span>';
-                                    } else {
-                                        echo '<span class="status-badge status-pending">Pending</span>';
-                                    }
+                                <?php
+                                $current_status = strtolower(trim($booking['status']));
+                                if ($current_status == 'completed') {
+                                    echo '<span class="status-badge status-completed">Returned</span>';
+                                } elseif ($current_status == 'returning') {
+                                    echo '<span class="status-badge status-returning">Awaiting Refund</span>';
+                                } elseif ($current_status == 'picked up') {
+                                    echo '<span class="status-badge status-pickup">Picked Up</span>';
+                                } else {
+                                    echo '<span class="status-badge status-pending">Pending</span>';
+                                }
                                 ?>
                             </td>
                             <td>
@@ -309,30 +442,39 @@ $conn->close();
                                     <!-- LANGKAH TERAKHIR: DAMAGE CHECK + LATE FEE CHECK -->
                                     <form method="POST" onsubmit="return confirm('Sahkan amaun refund?');">
                                         <input type="hidden" name="complete_booking_id" value="<?php echo $booking['id']; ?>">
-                                        
+
                                         <div style="margin-bottom: 5px;">
                                             <small>Paid Deposit: <strong>RM <?php echo number_format($booking['deposit_paid'], 2); ?></strong></small><br>
-                                            <?php if($booking['late_fee'] > 0): ?>
+                                            <?php if ($booking['late_fee'] > 0): ?>
                                                 <small style="color:red;">Late Fee: <strong>RM <?php echo number_format($booking['late_fee'], 2); ?></strong></small>
                                             <?php else: ?>
-                                                <small style="color:green;">Returned on time.</small>
+                                                <small style="color:green;">✓ Returned on time (No late fees)</small>
                                             <?php endif; ?>
                                         </div>
 
-                                        <?php 
-                                            // Cadangkan refund = Deposit - Late Fee
-                                            $suggested = $booking['deposit_paid'] - $booking['late_fee'];
-                                            if($suggested < 0) $suggested = 0;
+                                        <?php
+                                        // Cadangkan refund = Deposit - Late Fee
+                                        $suggested = $booking['deposit_paid'] - $booking['late_fee'];
+                                        if ($suggested < 0) $suggested = 0;
                                         ?>
-                                        
+
                                         <label style="font-size: 10px; display: block;">Refund Amount (RM):</label>
-                                        <input type="number" name="refund_amount" 
-                                               value="<?php echo $suggested; ?>" 
-                                               max="<?php echo $booking['deposit_paid']; ?>" 
-                                               step="0.01" 
-                                               required 
-                                               style="width: 100%; padding: 5px; border: 1px solid #ccc; border-radius: 4px; margin-bottom: 5px;">
-                                        
+                                        <input type="number" name="refund_amount"
+                                            value="<?php echo $suggested; ?>"
+                                            max="<?php echo $booking['deposit_paid']; ?>"
+                                            step="0.01"
+                                            required
+                                            style="width: 100%; padding: 5px; border: 1px solid #ccc; border-radius: 4px; margin-bottom: 5px;">
+                                        <small style="color: var(--text-dim); display: block; margin-bottom: 5px;">
+                                            <?php
+                                            if ($booking['late_fee'] > 0) {
+                                                echo "Deduction for late return: RM " . number_format($booking['late_fee'], 2);
+                                            } else {
+                                                echo "Full deposit to be refunded (early or on-time return)";
+                                            }
+                                            ?>
+                                        </small>
+
                                         <button type="submit" name="process_return" class="btn-complete" style="width: 100%; background-color: var(--success);">
                                             Finalize Refund
                                         </button>
@@ -349,4 +491,5 @@ $conn->close();
         </div>
     </div>
 </body>
+
 </html>
