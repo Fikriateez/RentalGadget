@@ -318,6 +318,9 @@
     let currentBase64 = "";
 
     // Load data from database when page loads
+<<<<<<< HEAD
+    window.onload = fetchGadgets;
+=======
     window.onload = function() {
         // Check if logged in
         fetch('dashboard.php?action=check', { credentials: 'include' })
@@ -334,6 +337,7 @@
             window.location.href = 'login.php';
         });
     };
+>>>>>>> 45019c6 (commit)
 
     // Handle Image Upload
     fileInput.addEventListener('change', function() {
@@ -366,6 +370,12 @@
         // Send POST request to API
         fetch('dashboard.php?action=add', {
             method: 'POST',
+<<<<<<< HEAD
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+=======
             body: formData,
             credentials: 'include'
         })
@@ -380,20 +390,32 @@
                 return;
             }
 
+>>>>>>> 45019c6 (commit)
             if (data.error) {
                 alert("Error: " + data.error);
                 return;
             }
+<<<<<<< HEAD
+            if(data.status === 'success') {
+=======
             if (data.status === 'success') {
+>>>>>>> 45019c6 (commit)
                 // Reset form on success
                 form.reset();
                 previewImg.style.display = 'none';
                 prompt.style.display = 'block';
                 currentBase64 = "";
+<<<<<<< HEAD
+                
+                // Refresh the list to show new item
+                fetchGadgets();
+                
+=======
 
                 // Refresh the list to show new item
                 fetchGadgets();
 
+>>>>>>> 45019c6 (commit)
                 alert("Device registered successfully!");
             } else {
                 alert("Error saving data: " + data.message);
@@ -409,6 +431,11 @@
     function fetchGadgets() {
         displayArea.innerHTML = '<div class="list-title">Loading stock...</div>';
 
+<<<<<<< HEAD
+        fetch('dashboard.php?action=fetch')
+        .then(response => response.json())
+        .then(data => {
+=======
         fetch('dashboard.php?action=fetch', {
             credentials: 'include'
         })
@@ -423,13 +450,18 @@
                 return;
             }
 
+>>>>>>> 45019c6 (commit)
             if (data.error) {
                 displayArea.innerHTML = '<div class="list-title">Error: ' + data.error + '</div>';
                 return;
             }
             displayArea.innerHTML = '<div class="list-title">Stock Overview</div>';
             
+<<<<<<< HEAD
+            if(data.length === 0) {
+=======
             if (data.length === 0) {
+>>>>>>> 45019c6 (commit)
                 displayArea.innerHTML += '<p style="color: #64748b; font-size: 0.85rem;">No items in database yet.</p>';
                 return;
             }
@@ -460,8 +492,12 @@
 
             fetch('dashboard.php?action=delete', {
                 method: 'POST',
+<<<<<<< HEAD
+                body: formData
+=======
                 body: formData,
                 credentials: 'include'
+>>>>>>> 45019c6 (commit)
             })
             .then(response => response.json())
             .then(data => {

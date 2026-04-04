@@ -97,7 +97,10 @@ $conn->close();
 
 <!DOCTYPE html>
 <html lang="en">
+<<<<<<< HEAD
+=======
 
+>>>>>>> 45019c6 (commit)
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -117,11 +120,15 @@ $conn->close();
             --danger: #ef4444;
         }
 
+<<<<<<< HEAD
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+=======
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
         }
+>>>>>>> 45019c6 (commit)
 
         body {
             background-color: var(--bg-body);
@@ -150,9 +157,13 @@ $conn->close();
             gap: 8px;
         }
 
+<<<<<<< HEAD
+        .nav-brand span { color: var(--accent); }
+=======
         .nav-brand span {
             color: var(--accent);
         }
+>>>>>>> 45019c6 (commit)
 
         .nav-actions {
             display: flex;
@@ -166,9 +177,13 @@ $conn->close();
             font-weight: 500;
         }
 
+<<<<<<< HEAD
+        .nav-link:hover { color: var(--accent); }
+=======
         .nav-link:hover {
             color: var(--accent);
         }
+>>>>>>> 45019c6 (commit)
 
         .container {
             max-width: 1200px;
@@ -193,6 +208,28 @@ $conn->close();
         }
 
         .tabs {
+<<<<<<< HEAD
+            display: flex; gap: 10px; margin-bottom: 30px; justify-content: center;
+        }
+
+        .tab-btn {
+            padding: 10px 24px; border-radius: 8px; border: 1px solid var(--border);
+            background: var(--bg-card); color: var(--text-dim); font-weight: 500;
+            cursor: pointer; transition: all 0.2s ease;
+        }
+
+        .tab-btn.active {
+            background: var(--accent); color: white; border-color: var(--accent);
+        }
+
+        .rentals-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 30px;
+        }
+
+        .rental-card {
+            background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border);
+            box-shadow: var(--shadow); overflow: hidden;
+=======
             display: flex;
             gap: 10px;
             margin-bottom: 30px;
@@ -228,23 +265,66 @@ $conn->close();
             border: 1px solid var(--border);
             box-shadow: var(--shadow);
             overflow: hidden;
+>>>>>>> 45019c6 (commit)
             display: flex;
             flex-direction: column;
         }
 
         /* BAHAGIAN KEMASKINI GAMBAR SUPAYA SERAGAM */
         .rental-image {
+<<<<<<< HEAD
+            width: 100%; 
+            height: 300px; /* Resize lebih kecil supaya lebih kemas */
+            object-fit: cover; 
+            object-position: center; 
+=======
             width: 100%;
             height: auto;
             min-height: 250px;
             max-height: 350px;
             object-fit: contain;
             object-position: center;
+>>>>>>> 45019c6 (commit)
             background: #f1f5f9;
             display: block;
             border-bottom: 1px solid var(--border);
         }
 
+<<<<<<< HEAD
+        .rental-content { padding: 20px; flex-grow: 1; }
+
+        .rental-name { font-weight: 600; font-size: 1.1rem; margin-bottom: 8px; }
+
+        .rental-specs { color: var(--text-dim); font-size: 0.85rem; margin-bottom: 15px; }
+
+        .rental-details {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;
+        }
+
+        .detail-item { background: #f8fafc; padding: 10px; border-radius: 8px; }
+
+        .detail-label { font-size: 0.75rem; color: var(--text-dim); margin-bottom: 2px; }
+
+        .detail-value { font-weight: 600; font-size: 0.9rem; }
+
+        .rental-date { color: var(--text-dim); font-size: 0.85rem; margin-bottom: 15px; }
+
+        .status-badge {
+            display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem;
+            font-weight: 600; text-transform: uppercase; margin-bottom: 15px;
+        }
+
+        .status-active { background: #fef3c7; color: #92400e; }
+        .status-pickup { background: #dbeafe; color: #1e40af; }
+        .status-returned { background: #dcfce7; color: #166534; }
+
+        .back-link {
+            display: inline-block; margin-bottom: 20px; color: var(--accent);
+            text-decoration: none; font-weight: 500;
+        }
+
+        .back-link:hover { text-decoration: underline; }
+=======
         .rental-content {
             padding: 20px;
             flex-grow: 1;
@@ -328,6 +408,7 @@ $conn->close();
         .back-link:hover {
             text-decoration: underline;
         }
+>>>>>>> 45019c6 (commit)
 
         /* Style untuk Lokasi */
         .location-box {
@@ -346,6 +427,27 @@ $conn->close();
             transition: background 0.2s;
         }
 
+<<<<<<< HEAD
+        .location-box:hover { background: #e0f2fe; }
+
+        .btn-invoice {
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            width: 100%; padding: 10px; margin-top: 15px; border-radius: 8px;
+            border: 1px solid var(--accent); background: transparent; color: var(--accent);
+            text-decoration: none; font-size: 0.85rem; font-weight: 600; transition: all 0.2s;
+        }
+
+        .btn-invoice:hover { background: var(--accent); color: white; }
+
+        /* GAYA BUTANG CANCEL */
+        .btn-cancel {
+            width: 100%; padding: 10px; margin-top: 8px; border-radius: 8px;
+            border: 1px solid var(--danger); background: transparent; color: var(--danger);
+            font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s;
+        }
+
+        .btn-cancel:hover { background: var(--danger); color: white; }
+=======
         .location-box:hover {
             background: #e0f2fe;
         }
@@ -392,6 +494,7 @@ $conn->close();
             background: var(--danger);
             color: white;
         }
+>>>>>>> 45019c6 (commit)
 
         /* Style untuk bahagian deposit */
         .deposit-info {
@@ -404,7 +507,10 @@ $conn->close();
         }
     </style>
 </head>
+<<<<<<< HEAD
+=======
 
+>>>>>>> 45019c6 (commit)
 <body>
     <nav class="navbar">
         <a href="product.php" class="nav-brand">Memory<span>Lens</span></a>
@@ -441,6 +547,9 @@ $conn->close();
                 <?php foreach ($rentals as $rental): ?>
                     <?php $st = strtolower($rental['status']); ?>
                     <div class="rental-card" data-status="<?php echo $st; ?>">
+<<<<<<< HEAD
+                        <img class="rental-image" src="<?php echo $rental['gadget_image'] ?: 'https://via.placeholder.com/350x200'; ?>" alt="<?php echo htmlspecialchars($rental['gadget_name']); ?>">
+=======
                         <?php
                         $imageData = trim($rental['gadget_image'] ?? '');
                         if ($imageData === '') {
@@ -452,6 +561,7 @@ $conn->close();
                         }
                         ?>
                         <img class="rental-image" src="<?php echo $imageSrc; ?>" alt="<?php echo htmlspecialchars($rental['gadget_name']); ?>">
+>>>>>>> 45019c6 (commit)
                         <div class="rental-content">
                             <!-- Status Badge Logic -->
                             <?php if ($st == 'completed'): ?>
@@ -461,15 +571,26 @@ $conn->close();
                             <?php else: ?>
                                 <span class="status-badge status-active">Pending Pickup</span>
                             <?php endif; ?>
+<<<<<<< HEAD
+                            
+                            <div class="rental-name"><?php echo htmlspecialchars($rental['gadget_name']); ?></div>
+                            <div class="rental-specs"><?php echo htmlspecialchars($rental['gadget_specs'] ?: 'No specifications'); ?></div>
+                            
+=======
 
                             <div class="rental-name"><?php echo htmlspecialchars($rental['gadget_name']); ?></div>
                             <div class="rental-specs"><?php echo htmlspecialchars($rental['gadget_specs'] ?: 'No specifications'); ?></div>
 
+>>>>>>> 45019c6 (commit)
                             <div class="rental-details">
                                 <div class="detail-item">
                                     <div class="detail-label">Duration</div>
                                     <div class="detail-value">
+<<<<<<< HEAD
+                                        <?php 
+=======
                                         <?php
+>>>>>>> 45019c6 (commit)
                                         $period = [];
                                         if ($rental['days'] > 0) $period[] = $rental['days'] . 'd';
                                         if ($rental['hours'] > 0) $period[] = $rental['hours'] . 'h';
@@ -494,13 +615,21 @@ $conn->close();
                                         <span style="color: var(--text-dim);">Deposit Paid:</span>
                                         <span style="font-weight: 600; color: #10b981;">RM <?php echo number_format($rental['deposit_paid'], 2); ?></span>
                                     </div>
+<<<<<<< HEAD
+                                    
+=======
 
+>>>>>>> 45019c6 (commit)
                                     <?php if ($st == 'completed'): ?>
                                         <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
                                             <span style="color: var(--text-dim);">Refunded:</span>
                                             <span style="font-weight: 600; color: var(--accent);">RM <?php echo number_format($rental['refund_amount'], 2); ?></span>
                                         </div>
+<<<<<<< HEAD
+                                        <?php if($rental['deposit_paid'] > $rental['refund_amount']): ?>
+=======
                                         <?php if ($rental['deposit_paid'] > $rental['refund_amount']): ?>
+>>>>>>> 45019c6 (commit)
                                             <div style="display: flex; justify-content: space-between; margin-top: 5px; padding-top: 5px; border-top: 1px solid #fde68a;">
                                                 <span style="color: var(--danger); font-weight: 600;">Deduction:</span>
                                                 <span style="color: var(--danger); font-weight: 600;">- RM <?php echo number_format($rental['deposit_paid'] - $rental['refund_amount'], 2); ?></span>
@@ -509,12 +638,26 @@ $conn->close();
                                     <?php endif; ?>
                                 <?php endif; ?>
                             </div>
+<<<<<<< HEAD
+                            
+=======
 
+>>>>>>> 45019c6 (commit)
                             <div class="rental-date">
                                 Rented on: <?php echo date('M d, Y', strtotime($rental['rental_date'])); ?>
                             </div>
 
                             <?php if ($settings): ?>
+<<<<<<< HEAD
+                            <a href="<?php echo htmlspecialchars($settings['map_link']); ?>" target="_blank" class="location-box">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                                Pickup: <?php echo htmlspecialchars($settings['location_name']); ?>
+                            </a>
+                            <?php endif; ?>
+
+                            <a href="generate_invoice.php?booking_id=<?php echo $rental['booking_id']; ?>" class="btn-invoice" target="_blank">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+=======
                                 <a href="<?php echo htmlspecialchars($settings['map_link']); ?>" target="_blank" class="location-box">
                                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                         <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
@@ -530,6 +673,7 @@ $conn->close();
                                     <polyline points="7 10 12 15 17 10"></polyline>
                                     <line x1="12" y1="15" x2="12" y2="3"></line>
                                 </svg>
+>>>>>>> 45019c6 (commit)
                                 Download Invoice
                             </a>
 
@@ -554,21 +698,38 @@ $conn->close();
         function filterRentals(filterValue) {
             const cards = document.querySelectorAll('.rental-card');
             const buttons = document.querySelectorAll('.tab-btn');
+<<<<<<< HEAD
+            
+            buttons.forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+=======
 
             buttons.forEach(btn => btn.classList.remove('active'));
             event.target.classList.add('active');
 
+>>>>>>> 45019c6 (commit)
             cards.forEach(card => {
                 const status = card.dataset.status.toLowerCase();
                 if (filterValue === 'all') {
                     card.style.display = 'block';
+<<<<<<< HEAD
+                } 
+                else if (filterValue === 'active') {
+=======
                 } else if (filterValue === 'active') {
+>>>>>>> 45019c6 (commit)
                     if (status !== 'completed') {
                         card.style.display = 'block';
                     } else {
                         card.style.display = 'none';
                     }
+<<<<<<< HEAD
+                } 
+                else if (filterValue === 'completed') {
+=======
                 } else if (filterValue === 'completed') {
+>>>>>>> 45019c6 (commit)
                     if (status === 'completed') {
                         card.style.display = 'block';
                     } else {
@@ -579,5 +740,8 @@ $conn->close();
         }
     </script>
 </body>
+<<<<<<< HEAD
+=======
 
+>>>>>>> 45019c6 (commit)
 </html>
