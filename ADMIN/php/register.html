@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MemoryLens Admin | Minimalist Inventory</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --accent: #0ea5e9; /* Professional Blue-Cyan */
+            --bg-body: #f8fafc; /* Soft off-white */
+            --bg-card: #ffffff; /* Pure white */
+            --border: #e2e8f0; /* Light slate border */
+            --text-main: #1e293b; /* Dark charcoal */
+            --text-dim: #64748b; /* Slate gray */
+            --shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+        }
+
+        * { box-sizing: border-box; transition: all 0.2s ease; margin: 0; padding: 0; }
+
+        body {
+            background-color: var(--bg-body);
+            font-family: 'Inter', sans-serif;
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- NAVIGATION BAR --- */
+        .navbar {
+            background-color: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+            padding: 0 40px;
+            height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-brand {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-main);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-brand span {
+            color: var(--accent);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 30px;
+            align-items: center;
+        }
+
+        .nav-link {
+            text-decoration: none;
+            color: var(--text-dim);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            color: var(--accent);
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .btn-outline {
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-main);
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .btn-outline:hover {
+            background: var(--bg-body);
+        }
+
+        /* --- MAIN LAYOUT --- */
+        .main-content {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 40px 20px;
+        }
+
+        .admin-wrapper {
+            width: 100%;
+            max-width: 580px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: var(--shadow);
+        }
+
+        .header { text-align: left; margin-bottom: 35px; border-bottom: 1px solid var(--border); padding-bottom: 20px;}
+        .header h1 { font-weight: 700; font-size: 1.6rem; margin: 0; color: var(--text-main); }
+        .header p { color: var(--text-dim); font-size: 0.9rem; margin-top: 5px; }
+
+        /* --- UPLOAD ZONE --- */
+        label { 
+            display: block; 
+            font-size: 0.75rem; 
+            font-weight: 600; 
+            margin-bottom: 8px; 
+            color: var(--text-dim); 
+            text-transform: uppercase; 
+            letter-spacing: 0.5px; 
+        }
+
+        .upload-zone {
+            width: 100%;
+            height: 180px;
+            background: #f1f5f9;
+            border: 2px dashed var(--border);
+            border-radius: 16px;
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center; justify-content: center;
+            overflow: hidden;
+            position: relative;
+            cursor: pointer;
+        }
+        
+        .upload-zone:hover { 
+            border-color: var(--accent); 
+            background: #f0f9ff; 
+        }
+
+        #previewImg { width: 100%; height: 100%; object-fit: cover; display: none; }
+        .upload-prompt { text-align: center; color: var(--text-dim); font-size: 0.85rem; pointer-events: none; }
+        .upload-prompt b { color: var(--accent); display: block; margin-bottom: 5px; font-size: 1.4rem; }
+
+        #fileInput { position: absolute; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+
+        /* --- FORM STYLING --- */
+        .form-group { margin-bottom: 20px; }
+
+        input, textarea {
+            width: 100%;
+            background: #ffffff;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px 16px;
+            color: var(--text-main);
+            font-size: 0.9rem;
+            outline: none;
+            font-family: inherit;
+        }
+        
+        input:focus, textarea:focus { 
+            border-color: var(--accent); 
+            box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+        }
+        
+        textarea { resize: none; height: 70px; }
+
+        .row { display: flex; gap: 15px; margin-bottom: 20px;}
+
+        .btn-submit {
+            width: 100%; 
+            padding: 16px; 
+            border-radius: 12px; 
+            border: none;
+            background: var(--accent); 
+            color: white; 
+            font-weight: 600;
+            font-size: 0.95rem;
+            cursor: pointer; 
+            margin-top: 10px;
+        }
+        
+        .btn-submit:hover { 
+            filter: brightness(1.05);
+            transform: translateY(-1px);
+        }
+
+        /* --- LIST STYLING --- */
+        .inventory-list { margin-top: 40px; padding-top: 25px; border-top: 1px solid var(--border); }
+        .list-title { font-weight: 700; font-size: 1rem; margin-bottom: 15px; color: var(--text-main); }
+        
+        .gadget-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 12px;
+            display: flex; 
+            align-items: center; 
+            gap: 16px; 
+            margin-bottom: 12px;
+        }
+        
+        .gadget-card img { 
+            width: 50px; height: 50px; 
+            border-radius: 8px; 
+            object-fit: cover; 
+            background: #eee;
+        }
+        
+        .details { flex: 1; }
+        .details h4 { margin: 0; font-size: 0.9rem; font-weight: 600; }
+        .details p { margin: 4px 0 0; font-size: 0.75rem; color: var(--text-dim); }
+        
+        .remove-btn { 
+            color: #ef4444; 
+            font-size: 0.75rem; 
+            font-weight: 600; 
+            cursor: pointer; 
+            padding: 6px 12px;
+            border-radius: 8px;
+        }
+        
+        .remove-btn:hover { background: #fef2f2; }
+    </style>
+</head>
+<body>
+
+<!-- NAVIGATION BAR -->
+<nav class="navbar">
+    <a href="#" class="nav-brand">
+        Memory<span>Lens</span>
+    </a>
+    
+    <div class="nav-links">
+        <a href="dashboard.php" class="nav-link">Dashboard</a>
+        <a href="register.html" class="nav-link active">Register</a>
+        <a href="booking.php" class="nav-link">Bookings</a>
+        <a href="customer.php" class="nav-link">Customers</a>
+        <a href="admin_settings.php" class="nav-link">Settings</a>
+    </div>
+
+    <div class="nav-actions">
+        <button class="btn-outline">Logout</button>
+    </div>
+</nav>
+
+<!-- MAIN CONTENT -->
+<main class="main-content">
+    <div class="admin-wrapper">
+        <div class="header">
+            <h1>Inventory Register</h1>
+            <p>Manage and register device stock levels.</p>
+        </div>
+
+        <form id="adminForm">
+            <label>Device Photo</label>
+            <div class="upload-zone">
+                <input type="file" id="fileInput" accept="image/*">
+                <div class="upload-prompt" id="prompt">
+                    <b>+</b>
+                    Upload product image
+                </div>
+                <img id="previewImg" src="">
+            </div>
+
+            <div class="form-group">
+                <label>Product Name</label>
+                <input type="text" id="name" placeholder="Sony Alpha 7 IV" required>
+            </div>
+
+            <div class="form-group">
+                <label>Key Specifications</label>
+                <textarea id="specs" placeholder="Megapixels, Optical Zoom, Key Features..."></textarea>
+            </div>
+
+            <div class="row">
+                <div style="flex: 1">
+                    <label>Total Units</label>
+                    <input type="number" id="stock" placeholder="Stock" required>
+                </div>
+                <div style="flex: 1">
+                    <label>Day Rate (RM)</label>
+                    <input type="number" id="priceDay" placeholder="RM 00" required>
+                </div>
+                <div style="flex: 1">
+                    <label>Hour Rate (RM)</label>
+                    <input type="number" id="priceHour" placeholder="RM 00" required>
+                </div>
+            </div>
+            
+            <button type="submit" class="btn-submit">Register Inventory</button>
+        </form>
+
+        <div class="inventory-list" id="displayArea">
+            <!-- JS rendered list -->
+        </div>
+    </div>
+</main>
+
+<!-- Keep all your existing HTML and CSS above this line -->
+
+<script>
+    const form = document.getElementById('adminForm');
+    const fileInput = document.getElementById('fileInput');
+    const previewImg = document.getElementById('previewImg');
+    const prompt = document.getElementById('prompt');
+    const displayArea = document.getElementById('displayArea');
+
+    let currentBase64 = "";
+
+    // Load data from database when page loads
+    window.onload = function() {
+        // Check if logged in
+        fetch('dashboard.php?action=check', { credentials: 'include' })
+        .then(response => response.json())
+        .then(data => {
+            if (data.logged_in) {
+                fetchGadgets();
+            } else {
+                window.location.href = 'login.php';
+            }
+        })
+        .catch(error => {
+            console.error('Error checking login:', error);
+            window.location.href = 'login.php';
+        });
+    };
+
+    // Handle Image Upload
+    fileInput.addEventListener('change', function() {
+        const file = this.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                currentBase64 = e.target.result;
+                previewImg.src = currentBase64;
+                previewImg.style.display = 'block';
+                prompt.style.display = 'none';
+            }
+            reader.readAsDataURL(file);
+        }
+    });
+
+    // Handle Form Submit (Send to PHP)
+    form.onsubmit = (e) => {
+        e.preventDefault();
+        
+        // Prepare data to send to PHP
+        const formData = new FormData();
+        formData.append('name', document.getElementById('name').value);
+        formData.append('specs', document.getElementById('specs').value);
+        formData.append('stock', document.getElementById('stock').value);
+        formData.append('priceDay', document.getElementById('priceDay').value);
+        formData.append('priceHour', document.getElementById('priceHour').value);
+        formData.append('image', currentBase64); // Send Base64 string
+
+        // Send POST request to API
+        fetch('dashboard.php?action=add', {
+            method: 'POST',
+            body: formData,
+            credentials: 'include'
+        })
+        .then(response => response.text())
+        .then(text => {
+            let data;
+            try {
+                data = JSON.parse(text);
+            } catch (e) {
+                console.error('Invalid JSON from dashboard.php?action=add:', text);
+                alert('Server returned invalid response when saving. Check browser console for details.');
+                return;
+            }
+
+            if (data.error) {
+                alert("Error: " + data.error);
+                return;
+            }
+            if (data.status === 'success') {
+                // Reset form on success
+                form.reset();
+                previewImg.style.display = 'none';
+                prompt.style.display = 'block';
+                currentBase64 = "";
+
+                // Refresh the list to show new item
+                fetchGadgets();
+
+                alert("Device registered successfully!");
+            } else {
+                alert("Error saving data: " + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert("An error occurred. Check the console for details.");
+        });
+    };
+
+    // Fetch data from PHP and render
+    function fetchGadgets() {
+        displayArea.innerHTML = '<div class="list-title">Loading stock...</div>';
+
+        fetch('dashboard.php?action=fetch', {
+            credentials: 'include'
+        })
+        .then(response => response.text())
+        .then(text => {
+            let data;
+            try {
+                data = JSON.parse(text);
+            } catch (e) {
+                console.error('Invalid JSON from dashboard.php?action=fetch:', text);
+                displayArea.innerHTML = '<div class="list-title">Error: Invalid server response.</div>';
+                return;
+            }
+
+            if (data.error) {
+                displayArea.innerHTML = '<div class="list-title">Error: ' + data.error + '</div>';
+                return;
+            }
+            displayArea.innerHTML = '<div class="list-title">Stock Overview</div>';
+            
+            if (data.length === 0) {
+                displayArea.innerHTML += '<p style="color: #64748b; font-size: 0.85rem;">No items in database yet.</p>';
+                return;
+            }
+
+            data.forEach(g => {
+                const card = document.createElement('div');
+                card.className = 'gadget-card';
+                // Notice the keys now match your Database columns (e.g., price_day instead of priceDay)
+                card.innerHTML = `
+                    <img src="${g.image}">
+                    <div class="details">
+                        <h4>${g.name}</h4>
+                        <p>RM ${g.price_day}/day • Qty: ${g.stock}</p>
+                    </div>
+                    <div class="remove-btn" onclick="removeG(${g.id})">Delete</div>
+                `;
+                displayArea.appendChild(card);
+            });
+        })
+        .catch(error => console.error('Error:', error));
+    }
+
+    // Delete item (Send to PHP)
+    function removeG(id) {
+        if(confirm("Remove this device from database?")) {
+            const formData = new FormData();
+            formData.append('id', id);
+
+            fetch('dashboard.php?action=delete', {
+                method: 'POST',
+                body: formData,
+                credentials: 'include'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if(data.status === 'success') {
+                    fetchGadgets(); // Refresh list after deletion
+                }
+            });
+        }
+    }
+</script>
+
+</body>
+</html>
