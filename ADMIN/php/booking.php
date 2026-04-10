@@ -33,6 +33,14 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['confirm_deposit'])) {
 }
 
 // --- LOGIK 2: Handle Confirm Pickup ---
+function tableHasColumn($conn, $table, $column)
+{
+    $res = $conn->query("SHOW COLUMNS FROM $table LIKE '$column'");
+    return $res && $res->num_rows > 0;
+}
+
+$hasActualReturn = tableHasColumn($conn, 'bookings', 'actual_return_time');
+
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['confirm_pickup'])) {
     $booking_id = intval($_POST['booking_id']);
     $stmt = $conn->prepare("UPDATE bookings SET status = 'Picked Up' WHERE id = ?");
@@ -52,20 +60,52 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['mark_returned'])) {
           JOIN register r ON b.gadget_id = r.id WHERE b.id = $booking_id";
     $data = $conn->query($q)->fetch_assoc();
 
-    $late_fee = 0; // Initialize to 0 (no late fee by default)
-    if ($data['return_deadline']) {
-        $deadline = new DateTime($data['return_deadline']);
-        $now = new DateTime(); // Waktu admin tekan butang
-
-        if ($now > $deadline) {
-            $diff = $deadline->diff($now);
-            // Kira jumlah jam lewat (bundar ke atas)
-            $hours_late = $diff->h + ($diff->days * 24) + ($diff->i > 0 ? 1 : 0);
-            $late_fee = $hours_late * $data['price_hour'];
+    // Get business hours for late fee calculation
+    $biz_hours = $conn->query("SELECT mon_hours FROM site_settings LIMIT 1");
+    $default_return_hour = 21; // 9 PM default
+    $default_return_min = 0;
+    if ($biz_hours && $biz_hours->num_rows > 0) {
+        $biz_row = $biz_hours->fetch_assoc();
+        $biz_str = $biz_row['mon_hours'];
+        if (strpos($biz_str, ' - ') !== false) {
+            list($start, $end) = explode(' - ', $biz_str);
+            $end = trim(strtoupper($end));
+            $end_obj = DateTime::createFromFormat('g:iA', str_replace(' ', '', $end)) ?: DateTime::createFromFormat('gA', $end);
+            if ($end_obj) {
+                $default_return_hour = (int)$end_obj->format('H');
+                $default_return_min = (int)$end_obj->format('i');
+            }
         }
     }
 
-    $stmt = $conn->prepare("UPDATE bookings SET status = 'Returning', late_fee = ? WHERE id = ?");
+    $late_fee = 0; // Initialize to 0 (no late fee by default)
+    if (!empty($data['return_deadline'])) {
+        try {
+            $deadline = new DateTime($data['return_deadline']);
+            $deadlineTime = $deadline->format('H:i');
+            
+            // If deadline time is 00:00, use business hours default end time
+            if ($deadlineTime === '00:00') {
+                $deadline->setTime($default_return_hour, $default_return_min, 0);
+            }
+            
+            $now = new DateTime(); // Waktu admin tekan butang
+            $seconds_late = $now->getTimestamp() - $deadline->getTimestamp();
+
+            if ($seconds_late > 0) {
+                $hours_late = (int) ceil($seconds_late / 3600);
+                $late_fee = $hours_late * $data['price_hour'];
+            }
+        } catch (Exception $e) {
+            $late_fee = 0;
+        }
+    }
+
+    if ($hasActualReturn) {
+        $stmt = $conn->prepare("UPDATE bookings SET status = 'Returning', late_fee = ?, actual_return_time = NOW() WHERE id = ?");
+    } else {
+        $stmt = $conn->prepare("UPDATE bookings SET status = 'Returning', late_fee = ? WHERE id = ?");
+    }
     $stmt->bind_param("di", $late_fee, $booking_id);
     $stmt->execute();
     $stmt->close();
@@ -116,15 +156,43 @@ $query = "SELECT
     b.status, 
     b.deposit_paid,
     b.deposit_status,
-    b.late_fee,
-    u.name as user_name,
-    u.email as user_email,
-    r.name as gadget_name,
-    r.deposit_price as req_deposit
-FROM bookings b
-JOIN users u ON b.user_id = u.id
-JOIN register r ON b.gadget_id = r.id
-ORDER BY b.rental_date DESC";
+    b.late_fee" . ($hasActualReturn ? ",\n    b.actual_return_time" : "") . ",\n    u.name as user_name,\n    u.email as user_email,\n    r.name as gadget_name,\n    r.deposit_price as req_deposit\nFROM bookings b\nJOIN users u ON b.user_id = u.id\nJOIN register r ON b.gadget_id = r.id\nORDER BY b.id ASC";
+
+// Fetch business hours for display fallback
+$business_hours = $conn->query("SELECT mon_hours FROM site_settings LIMIT 1");
+$default_start_time = "09:00";
+$default_end_time = "21:00";
+if ($business_hours && $business_hours->num_rows > 0) {
+    $hours_row = $business_hours->fetch_assoc();
+    $hours_str = $hours_row['mon_hours'];
+    if (strpos($hours_str, ' - ') !== false) {
+        list($start, $end) = explode(' - ', $hours_str);
+        $start = trim(strtoupper($start));
+        $end = trim(strtoupper($end));
+        
+        // Convert AM/PM format to 24-hour format
+        $start_obj = DateTime::createFromFormat('g:iA', str_replace(' ', '', $start)) ?: DateTime::createFromFormat('gA', $start);
+        $end_obj = DateTime::createFromFormat('g:iA', str_replace(' ', '', $end)) ?: DateTime::createFromFormat('gA', $end);
+        
+        if ($start_obj) $default_start_time = $start_obj->format('H:i');
+        if ($end_obj) $default_end_time = $end_obj->format('H:i');
+    }
+}
+
+// Helper function to format datetime with business hours fallback
+function formatDateTimeWithBusinessHours($dateStr, $isReturnTime = false, $defaultStart = "09:00", $defaultEnd = "18:00") {
+    $time = new DateTime($dateStr);
+    $timeOnly = $time->format('H:i');
+    
+    // If time is 00:00 (midnight/empty), use business hours
+    if ($timeOnly === '00:00') {
+        $displayTime = $isReturnTime ? $defaultEnd : $defaultStart;
+    } else {
+        $displayTime = $timeOnly;
+    }
+    
+    return date('M d, Y', strtotime($dateStr)) . ' ' . $displayTime;
+}
 
 $result = $conn->query($query);
 $bookings = [];
@@ -309,6 +377,11 @@ $conn->close();
             color: #475569;
         }
 
+        .status-cancel {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+
         .btn-complete {
             background-color: var(--accent);
             color: white;
@@ -377,8 +450,13 @@ $conn->close();
                         <th>ID</th>
                         <th>User</th>
                         <th>Gadget</th>
+                        <th>Duration</th>
                         <th>Total Price</th>
-                        <th>Rental Date</th>
+                        <th>Pickup</th>
+                        <th>Expected Return</th>
+                        <?php if ($hasActualReturn): ?>
+                            <th>Actual Return</th>
+                        <?php endif; ?>
                         <th>Status</th>
                         <th>Action</th>
                     </tr>
@@ -392,15 +470,34 @@ $conn->close();
                                 <small><?php echo htmlspecialchars($booking['user_email']); ?></small>
                             </td>
                             <td><?php echo htmlspecialchars($booking['gadget_name']); ?></td>
+                            <td>
+                                <?php 
+                                $duration = "";
+                                if ($booking['days'] > 0) {
+                                    $duration .= $booking['days'] . " day" . ($booking['days'] != 1 ? "s" : "");
+                                }
+                                if ($booking['hours'] > 0) {
+                                    if ($duration) $duration .= " ";
+                                    $duration .= $booking['hours'] . " hour" . ($booking['hours'] != 1 ? "s" : "");
+                                }
+                                echo $duration ? $duration : "No duration";
+                                ?>
+                            </td>
                             <td style="color: var(--success); font-weight: 600;">
                                 RM <?php echo number_format($booking['total_price'], 2); ?>
                             </td>
-                            <td><?php echo date('M d, Y', strtotime($booking['rental_date'])); ?></td>
+                            <td><?php echo formatDateTimeWithBusinessHours($booking['rental_date'], false, $default_start_time, $default_end_time); ?></td>
+                            <td><?php echo formatDateTimeWithBusinessHours($booking['return_deadline'], true, $default_start_time, $default_end_time); ?></td>
+                            <?php if ($hasActualReturn): ?>
+                                <td><?php echo $booking['actual_return_time'] ? formatDateTimeWithBusinessHours($booking['actual_return_time'], true, $default_start_time, $default_end_time) : '-'; ?></td>
+                            <?php endif; ?>
                             <td>
                                 <?php
                                 $current_status = strtolower(trim($booking['status']));
                                 if ($current_status == 'completed') {
                                     echo '<span class="status-badge status-completed">Returned</span>';
+                                } elseif ($current_status == 'cancel' || $current_status == 'cancelled') {
+                                    echo '<span class="status-badge status-cancel">Cancelled</span>';
                                 } elseif ($current_status == 'returning') {
                                     echo '<span class="status-badge status-returning">Awaiting Refund</span>';
                                 } elseif ($current_status == 'picked up') {
@@ -411,7 +508,9 @@ $conn->close();
                                 ?>
                             </td>
                             <td>
-                                <?php if ($booking['deposit_status'] == 'Unpaid'): ?>
+                                <?php if ($current_status == 'cancel' || $current_status == 'cancelled'): ?>
+                                    <span class="returned-text">Booking was cancelled by user</span>
+                                <?php elseif ($booking['deposit_status'] == 'Unpaid'): ?>
                                     <!-- LANGKAH 1: SAHKAN BAYARAN DEPOSIT -->
                                     <form method="POST">
                                         <input type="hidden" name="booking_id" value="<?php echo $booking['id']; ?>">

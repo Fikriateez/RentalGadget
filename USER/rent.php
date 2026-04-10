@@ -45,14 +45,35 @@ if (!$gadget) {
     die("Gadget not found");
 }
 
+// Fetch default business hours from site_settings
+$business_hours = $conn->query("SELECT mon_hours FROM site_settings LIMIT 1");
+$default_start_time = "09:00";
+$default_end_time = "21:00";
+if ($business_hours && $business_hours->num_rows > 0) {
+    $hours_row = $business_hours->fetch_assoc();
+    $hours_str = $hours_row['mon_hours'];
+    if (strpos($hours_str, ' - ') !== false) {
+        list($start, $end) = explode(' - ', $hours_str);
+        $start = trim(strtoupper($start));
+        $end = trim(strtoupper($end));
+        
+        // Convert AM/PM format to 24-hour format
+        $start_obj = DateTime::createFromFormat('g:iA', str_replace(' ', '', $start)) ?: DateTime::createFromFormat('gA', $start);
+        $end_obj = DateTime::createFromFormat('g:iA', str_replace(' ', '', $end)) ?: DateTime::createFromFormat('gA', $end);
+        
+        if ($start_obj) $default_start_time = $start_obj->format('H:i');
+        if ($end_obj) $default_end_time = $end_obj->format('H:i');
+    }
+}
+
 // Handle rental submission
 $message = "";
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     // Ambil data tarikh dan masa
     $start_date = $_POST['start_date'];
     $end_date = $_POST['end_date'];
-    $start_time = $_POST['start_time'];
-    $end_time = $_POST['end_time'];
+    $start_time = !empty($_POST['start_time']) ? $_POST['start_time'] : $default_start_time;
+    $end_time = !empty($_POST['end_time']) ? $_POST['end_time'] : $default_end_time;
 
     // Kira jumlah hari
     $date1 = new DateTime($start_date);
@@ -61,8 +82,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $days = $intervalDays->days;
 
     // Kira jumlah jam (berdasarkan beza masa)
-    $time1 = new DateTime($start_time);
-    $time2 = new DateTime($end_time);
+    $time1 = new DateTime("1970-01-01 " . $start_time);
+    $time2 = new DateTime("1970-01-01 " . $end_time);
     $intervalHours = $time1->diff($time2);
     $hours = $intervalHours->h + ($intervalHours->i / 60);
 
@@ -80,6 +101,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $message = "Pick-up time cannot be earlier than the current time.";
     } elseif ($days == 0 && $time2 <= $time1) {
         $message = "End time must be later than start time for same-day rental.";
+    } elseif ($start_time < $default_start_time) {
+        $message = "Pick-up time cannot be earlier than " . $default_start_time . " (store opening time).";
+    } elseif ($end_time > $default_end_time) {
+        $message = "Return time cannot be later than " . $default_end_time . " (store closing time). Please select an earlier return time.";
     } elseif ($gadget['stock'] <= 0) {
         $message = "Sorry, this gadget is out of stock.";
     } else {
@@ -91,16 +116,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $deposit_status = "Unpaid";
         $status = "Pending";
 
-        // 3. LOGIK DEADLINE: Gabungkan end_date dan end_time untuk simpan waktu akhir sepatutnya
+        // 3. LOGIK RENTAL DATETIME: Simpan waktu pickup dan waktu akhir sepatutnya
+        $rental_date = $start_date . ' ' . $start_time . ':00';
         $return_deadline = $end_date . ' ' . $end_time . ':00';
 
-        // 4. QUERY INSERT (Pastikan kolum return_deadline ada dalam table bookings)
+        // 4. QUERY INSERT (Pastikan kolum rental_date dan return_deadline adalah DATETIME)
         $user_id = $_SESSION['user_id'];
         $booking_stmt = $conn->prepare("INSERT INTO bookings (user_id, gadget_id, days, hours, total_price, rental_date, return_deadline, status, deposit_paid, deposit_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 
         // i = integer, d = double, s = string
-        // Urutan: user_id(i), gadget_id(i), days(i), hours(i), total_price(d), start_date(s), return_deadline(s), status(s), deposit_paid(d), deposit_status(s)
-        $booking_stmt->bind_param("iiiidsssds", $user_id, $gadget_id, $days, $hours, $total_price, $start_date, $return_deadline, $status, $deposit_paid, $deposit_status);
+        // Urutan: user_id(i), gadget_id(i), days(i), hours(i), total_price(d), rental_date(s), return_deadline(s), status(s), deposit_paid(d), deposit_status(s)
+        $booking_stmt->bind_param("iiiidsssds", $user_id, $gadget_id, $days, $hours, $total_price, $rental_date, $return_deadline, $status, $deposit_paid, $deposit_status);
 
         if ($booking_stmt->execute()) {
             // Fetch User Email

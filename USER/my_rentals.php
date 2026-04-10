@@ -1,6 +1,13 @@
 <?php
 session_start();
 
+use PHPMailer\PHPMailer\PHPMailer;
+use PHPMailer\PHPMailer\Exception;
+
+require 'PHPMailer/src/Exception.php';
+require 'PHPMailer/src/PHPMailer.php';
+require 'PHPMailer/src/SMTP.php';
+
 // Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
     header("Location: about.php");
@@ -18,12 +25,13 @@ if ($conn->connect_error) {
 }
 
 // --- LOGIK PEMBATALAN (CANCELLATION) ---
+$cancel_message = '';
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['cancel_booking_id'])) {
     $cancel_id = intval($_POST['cancel_booking_id']);
     $u_id = $_SESSION['user_id'];
 
-    // 1. Ambil gadget_id sebelum delete untuk pulangkan stok
-    $get_gadget = $conn->prepare("SELECT gadget_id FROM bookings WHERE id = ? AND user_id = ? AND status = 'Pending'");
+    // 1. Ambil gadget_id dan nama gadget sebelum kemaskini untuk pulangkan stok dan hantar email
+    $get_gadget = $conn->prepare("SELECT b.gadget_id, r.name AS gadget_name FROM bookings b JOIN register r ON b.gadget_id = r.id WHERE b.id = ? AND b.user_id = ? AND b.status = 'Pending'");
     $get_gadget->bind_param("ii", $cancel_id, $u_id);
     $get_gadget->execute();
     $res_gadget = $get_gadget->get_result();
@@ -31,25 +39,83 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['cancel_booking_id'])) 
     if ($res_gadget->num_rows > 0) {
         $row_b = $res_gadget->fetch_assoc();
         $g_id = $row_b['gadget_id'];
+        $gadget_name = $row_b['gadget_name'];
+
+        // Get user email for notification
+        $user_email = '';
+        $email_stmt = $conn->prepare("SELECT email FROM users WHERE id = ?");
+        $email_stmt->bind_param("i", $u_id);
+        $email_stmt->execute();
+        $email_result = $email_stmt->get_result();
+        if ($email_result && $email_result->num_rows > 0) {
+            $user_email = $email_result->fetch_assoc()['email'];
+        }
+        $email_stmt->close();
 
         // Mulakan transaction
         $conn->begin_transaction();
         try {
-            // 2. Padam tempahan
-            $del = $conn->prepare("DELETE FROM bookings WHERE id = ?");
-            $del->bind_param("i", $cancel_id);
-            $del->execute();
+            // 2. Kemas kini status booking kepada CANCEL
+            $stmt_cancel = $conn->prepare("UPDATE bookings SET status = 'CANCEL' WHERE id = ?");
+            $stmt_cancel->bind_param("i", $cancel_id);
+            $stmt_cancel->execute();
 
-            // 3. Tambah semula stok (+1)
+            // 3. Pulangkan stok (+1)
             $conn->query("UPDATE register SET stock = stock + 1 WHERE id = $g_id");
 
             $conn->commit();
-            header("Location: my_rentals.php?cancelled=success");
+
+            $email_status = 'none';
+            if (!empty($user_email)) {
+                try {
+                    $mail = new PHPMailer(true);
+                    $mail->isSMTP();
+                    $mail->Host       = 'smtp.gmail.com';
+                    $mail->SMTPAuth   = true;
+                    $mail->Username   = 'kl2508019931@student.uptm.edu.my';
+                    $mail->Password   = 'bvoqltwiytcjpjvb';
+                    $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+                    $mail->Port       = 587;
+
+                    $mail->setFrom('kl2508019931@student.uptm.edu.my', 'RentalGadget');
+                    $mail->addAddress($user_email);
+
+                    $mail->isHTML(true);
+                    $mail->Subject = 'Booking Cancelled - ' . $gadget_name;
+                    $mail->Body    = "<h3>Your booking has been cancelled</h3>" .
+                        "<p>Your booking for <strong>" . htmlspecialchars($gadget_name) . "</strong> has been successfully cancelled.</p>" .
+                        "<p>If you have already paid a deposit, please contact support for refund details.</p>";
+
+                    $mail->send();
+                    $email_status = 'sent';
+                } catch (Exception $e) {
+                    $email_status = 'failed';
+                }
+            }
+
+            header("Location: my_rentals.php?cancelled=success&email=" . $email_status);
             exit;
         } catch (Exception $e) {
             $conn->rollback();
+            header("Location: my_rentals.php?cancelled=failed");
+            exit;
         }
+    } else {
+        header("Location: my_rentals.php?cancelled=failed");
+        exit;
     }
+}
+
+if (isset($_GET['cancelled']) && $_GET['cancelled'] === 'success') {
+    if (isset($_GET['email']) && $_GET['email'] === 'sent') {
+        $cancel_message = 'Your booking has been cancelled successfully. A notification email has been sent.';
+    } elseif (isset($_GET['email']) && $_GET['email'] === 'failed') {
+        $cancel_message = 'Your booking has been cancelled successfully, but email notification could not be sent.';
+    } else {
+        $cancel_message = 'Your booking has been cancelled successfully.';
+    }
+} elseif (isset($_GET['cancelled']) && $_GET['cancelled'] === 'failed') {
+    $cancel_message = 'Unable to cancel the booking. Please try again or contact support.';
 }
 
 // --- AMBIL DATA LOKASI DARI SITE_SETTINGS ---
@@ -79,7 +145,16 @@ $query = "SELECT
 FROM bookings b
 JOIN register r ON b.gadget_id = r.id
 WHERE b.user_id = ?
-ORDER BY b.rental_date DESC";
+ORDER BY
+    CASE
+        WHEN b.status = 'Pending' THEN 1
+        WHEN b.status = 'Picked Up' THEN 2
+        WHEN b.status = 'Returning' THEN 3
+        WHEN b.status = 'CANCEL' THEN 4
+        WHEN b.status = 'Completed' THEN 5
+        ELSE 6
+    END,
+    b.rental_date ASC";
 
 $stmt = $conn->prepare($query);
 $stmt->bind_param("i", $user_id);
@@ -262,6 +337,11 @@ $conn->close();
             color: #059669;
         }
 
+        .status-cancel {
+            background: #fee2e2;
+            color: #b91c1c;
+        }
+
         .status-pickup {
             background: #eff6ff;
             color: #2563eb;
@@ -383,10 +463,17 @@ $conn->close();
             <p>View and manage your rental history</p>
         </div>
 
+        <?php if ($cancel_message): ?>
+            <div style="margin-bottom: 20px; padding: 16px; border-radius: 12px; background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0;">
+                <?php echo htmlspecialchars($cancel_message); ?>
+            </div>
+        <?php endif; ?>
+
         <div class="tabs">
             <button class="tab-btn active" onclick="filterRentals('all', this)">All</button>
             <button class="tab-btn" onclick="filterRentals('pending', this)">Active</button>
             <button class="tab-btn" onclick="filterRentals('completed', this)">Returned</button>
+            <button class="tab-btn" onclick="filterRentals('cancelled', this)">Cancelled</button>
         </div>
 
         <?php if (empty($rentals)): ?>
@@ -419,6 +506,8 @@ $conn->close();
                             <!-- Status Badge Logic -->
                             <?php if ($st == 'completed'): ?>
                                 <span class="status-badge status-returned">Returned</span>
+                            <?php elseif ($st == 'cancel'): ?>
+                                <span class="status-badge status-cancel">Cancelled</span>
                             <?php elseif ($st == 'returning'): ?>
                                 <span class="status-badge status-pickup">Awaiting Refund</span>
                             <?php elseif ($st == 'picked up'): ?>
@@ -521,6 +610,12 @@ $conn->close();
                 } else if (filterValue === 'completed') {
                     // Completed only
                     if (status === 'completed') {
+                        card.style.display = 'block';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                } else if (filterValue === 'cancelled') {
+                    if (status === 'cancel') {
                         card.style.display = 'block';
                     } else {
                         card.style.display = 'none';
